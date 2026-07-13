@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Экосистема в пробирке</title>
+    <style>
+        body {
+            background-color: #111;
+            color: #eee;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            width: 600px;
+            height: 450px;
+            image-rendering: pixelated;
+            border: 2px solid #444;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            cursor: crosshair;
+        }
+        .controls {
+            margin-top: 15px;
+            text-align: center;
+            background: #222;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        kbd {
+            background: #444;
+            padding: 3px 6px;
+            border-radius: 4px;
+            border: 1px solid #555;
+            font-family: monospace;
+            color: #fff;
+        }
+        .slider-container {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #444;
+        }
+        /* Стилизация самого ползунка для красоты */
+        input[type=range] {
+            accent-color: #ff5555;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Экран симуляции -->
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- Панель управления -->
+    <div class="controls">
+        <p style="margin: 0 0 5px 0; font-size: 14px;">
+            <kbd>ЛКМ</kbd> — Рисовать материалом
+        </p>
+        <p style="margin: 0; font-size: 13px; color: #aaa;">
+            <kbd>1</kbd> Песок | <kbd>2</kbd> Вода | <kbd>3</kbd> Камень | <kbd>4</kbd> Минерал | <kbd>5</kbd> Огонь | <kbd>0</kbd> Ластик
+        </p>
+        
+        <div class="slider-container">
+            <label for="tempSlider" style="font-weight: bold; font-size: 14px;">
+                Температура в пробирке: <span id="tempValue" style="color: #ff5555;">20</span>°C
+            </label>
+            <br>
+            <input type="range" id="tempSlider" min="-20" max="150" value="20" style="width: 300px; margin-top: 8px;">
+        </div>
+    </div>
+
+    <!-- Важно: подключаем наш оркестратор как модуль -->
+    <script type="module" src="./src/main.js"></script>
+    
+</body>
+</html>
