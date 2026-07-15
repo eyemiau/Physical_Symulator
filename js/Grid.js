@@ -144,9 +144,35 @@ export class Grid {
             }
         }
 
+        // --- РЕАКЦИИ КИСЛОТЫ ---
+        if (type === ELEMENTS.ACID) {
+            const neighbors = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+            for (let [dx, dy] of neighbors) {
+                const nx = x + dx;
+                const ny = y + dy;
+                const neighborType = this.getCell(nx, ny);
+
+                // Если это не воздух, не жидкость, не газ и нет иммунитета (Камень)
+                if (neighborType !== ELEMENTS.AIR &&
+                    !PROPERTIES[neighborType]?.isLiquid && 
+                    !PROPERTIES[neighborType]?.isGas && 
+                    !PROPERTIES[neighborType]?.isAcidResistant) {
+                    
+                    this.setCell(nx, ny, ELEMENTS.AIR);       // Съедаем твердый материал
+                    this.setCell(x, y, ELEMENTS.TOXIC_GAS);   // Кислота расходуется, выделяя газ
+                    return true; // Реакция произошла, прерываем проверку для этой капли
+                }
+            }
+        }
+
+
         // --- КОНДЕНСАЦИЯ ПАРА ---
         if (type === ELEMENTS.STEAM && y === 0) {
             this.setCell(x, y, ELEMENTS.WATER);
+            return true;
+        }
+        if (type === ELEMENTS.TOXIC_GAS && y === 0) {
+            this.setCell(x, y, ELEMENTS.AIR);
             return true;
         }
 
@@ -160,22 +186,23 @@ export class Grid {
         if (props.isPowder) {
             this.movePowder(x, y, dir);
         } else if (props.isLiquid) {
-            // Если жидкость падает в песок (просачивание)
-            if (this.isElement(x, y + 1, ELEMENTS.SAND) && Math.random() < 0.1) {
-                this.swap(x, y, x, y + 1);
-            } else {
-                this.moveLiquid(x, y, dir);
-            }
+            this.moveLiquid(x, y, dir);
         } else if (props.isGas) {
             this.moveGas(x, y, dir);
         }
     }
 
     movePowder(x, y, dir) {
-        // Вниз -> по случайной диагонали -> по другой диагонали
+        // 1. Сначала пытаемся упасть в пустые клетки (воздух)
         if (this.tryMove(x, y, 0, 1)) return;
         if (this.tryMove(x, y, dir, 1)) return;
-        this.tryMove(x, y, -dir, 1);
+        if (this.tryMove(x, y, -dir, 1)) return;
+        
+        const cellBelow = this.getCell(x, y + 1);
+        if (PROPERTIES[cellBelow]?.isLiquid) {
+            this.swap(x, y, x, y + 1); 
+            return;
+        }
     }
 
     moveLiquid(x, y, dir) {

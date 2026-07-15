@@ -1,7 +1,8 @@
 // --- СПИСОК ВСЕХ ЭЛЕМЕНТОВ (ID) ---
 export const ELEMENTS = {
     AIR: 0, SAND: 1, WATER: 2, STONE: 3, MINERAL: 4, SOLUTION: 5, 
-    CRYSTAL: 6, STEAM: 7, LAVA: 8, WOOD: 9, OIL: 10, ASH: 11, FIRE: 12 
+    CRYSTAL: 6, STEAM: 7, LAVA: 8, WOOD: 9, OIL: 10, ASH: 11, FIRE: 12,
+    ACID: 13, TOXIC_GAS: 14,
 };
 
 // --- ЦВЕТА ЭЛЕМЕНТОВ (RGB) ---
@@ -18,7 +19,9 @@ export const COLORS = {
     [ELEMENTS.WOOD]: [139, 69, 19],
     [ELEMENTS.OIL]: [40, 40, 40],
     [ELEMENTS.ASH]: [50, 50, 50],      
-    [ELEMENTS.FIRE]: [255, 140, 0]     
+    [ELEMENTS.FIRE]: [255, 140, 0],
+    [ELEMENTS.ACID]: [173, 255, 47],
+    [ELEMENTS.TOXIC_GAS]: [154, 205, 50],
 };
 
 // --- ФИЗИЧЕСКИЕ И ХИМИЧЕСКИЕ СВОЙСТВА ---
@@ -31,14 +34,16 @@ export const PROPERTIES = {
     // Добавлено evaporateTo для гибкого испарения
     [ELEMENTS.WATER]: { isLiquid: true, isGas: false, canEvaporate: true, evaporateTo: ELEMENTS.STEAM },
     [ELEMENTS.SOLUTION]: { isLiquid: true, isGas: false, canEvaporate: true, evaporateTo: ELEMENTS.CRYSTAL },
-    
-    [ELEMENTS.STONE]: { isLiquid: false, isGas: false },
+    [ELEMENTS.ACID]: { isLiquid: true, canEvaporate: true, evaporateTo: ELEMENTS.TOXIC_GAS},
+
+    [ELEMENTS.STONE]: { isLiquid: false, isGas: false, isAcidResistant: true },
     [ELEMENTS.MINERAL]: { isLiquid: false, isGas: false },
     [ELEMENTS.CRYSTAL]: { isLiquid: false, isGas: false },
     
     [ELEMENTS.STEAM]: { isLiquid: false, isGas: true },
     [ELEMENTS.FIRE]: { isLiquid: false, isGas: true, isIgniter: true },
-    
+    [ELEMENTS.TOXIC_GAS]: { isLiquid: false, isGas: true },
+
     [ELEMENTS.LAVA]: { isLiquid: true, isGas: false, isIgniter: true },
     [ELEMENTS.WOOD]: { isLiquid: false, isGas: false, isFlammable: true },
     [ELEMENTS.OIL]: { isLiquid: true, isGas: false, isFlammable: true }
