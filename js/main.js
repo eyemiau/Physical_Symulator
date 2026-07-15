@@ -54,21 +54,20 @@ tempSlider.addEventListener('input', (e) => {
 // 2. Обработка мыши на Canvas
 // Вспомогательная функция для рисования
 function drawCell(e) {
-    if (!isDrawing) return;
+  if (!isDrawing) return;
+  const rect = renderer.canvas.getBoundingClientRect();
 
-    // Получаем координаты мыши относительно самого элемента Canvas
-    const rect = renderer.canvas.getBoundingClientRect();
-    
-    // Высчитываем координаты в нашей сетке (делим на SCALE)
-    const mouseX = Math.floor((e.clientX - rect.left) / CONFIG.SCALE);
-    const mouseY = Math.floor((e.clientY - rect.top) / CONFIG.SCALE);
+  const scaleX = renderer.canvas.width / rect.width;
+  const scaleY = renderer.canvas.height / rect.height;
 
-    // Рисуем "кистью" размером 3x3 клетки для удобства
-    for (let i = -1; i <= 1; i++) {
-        for (let j = -1; j <= 1; j++) {
-            grid.setCell(mouseX + i, mouseY + j, currentElement);
-        }
+  const mouseX = Math.floor((e.clientX - rect.left) * scaleX);
+  const mouseY = Math.floor((e.clientY - rect.top) * scaleY);
+
+  for (let i = -1; i <= 1; i++) {
+    for (let j = -1; j <= 1; j++) {
+      grid.setCell(mouseX + i, mouseY + j, currentElement);
     }
+  }
 }
 
 renderer.canvas.addEventListener('mousedown', (e) => {
