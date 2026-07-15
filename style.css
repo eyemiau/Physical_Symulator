@@ -1,0 +1,85 @@
+body {
+    background-color: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: sans-serif;
+    overflow: hidden;
+}
+
+/* Контейнер держит всё вместе */
+#game-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Красивая панель инструментов */
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px;
+    background: #222;
+    border: 2px solid #444;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.element-btn {
+    padding: 10px 16px;
+    border: 2px solid transparent; /* Подготовка под рамку active */
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-size: 13px;
+    
+    /* Делаем текст читаемым даже на светлых кнопках (как SAND) */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9); 
+    transition: transform 0.1s, border 0.1s;
+}
+
+.element-btn:hover {
+    transform: scale(1.05);
+}
+
+.element-btn:active {
+    transform: scale(0.95);
+}
+
+.element-btn.active {
+    border: 2px solid white;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+}
+
+canvas {
+    background-color: #000;
+    border: 2px solid #444;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    
+    /* Жестко заставляем браузер не размывать пиксели */
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+}
+
+.temp-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    gap: 5px;
+}
+
+#tempSlider {
+    cursor: pointer;
+}
