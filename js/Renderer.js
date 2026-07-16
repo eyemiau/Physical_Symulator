@@ -1,4 +1,4 @@
-import { COLORS } from "./elements.js";
+import { COLORS, ELEMENTS } from "./elements.js";
 
 export class Renderer {
   constructor(config) {
@@ -39,14 +39,35 @@ export class Renderer {
     this.canvas.style.height = `${this.height * this.scale}px`;
   }
 
-  draw(grid) {
+    draw(grid) {
     for (let i = 0; i < grid.length; i++) {
       const type = grid.types[i];
       const color = COLORS[type];
+      
+      // Инициализируем базовый цвет
+      let r = color[0];
+      let g = color[1];
+      let b = color[2];
+
+      // --- НАШ МИНИ-ШЕЙДЕР ВЛАЖНОСТИ ---
+      // Если это Почва, мы динамически затемняем её на основе массива moisture
+      if (type === ELEMENTS.DIRT) {
+        const moisture = grid.moisture[i]; // Значение от 0 до 255
+        
+        // Вычисляем коэффициент затемнения. 
+        // При максимальной влажности (255) мы отнимем 50 единиц яркости от каждого канала
+        const darkenAmount = (moisture / 255) * 50; 
+        
+        // Math.max(0, ...) спасает нас от отрицательных значений RGB
+        r = Math.max(0, r - darkenAmount);
+        g = Math.max(0, g - darkenAmount);
+        b = Math.max(0, b - darkenAmount);
+      }
+
       const pixelIndex = i * 4;
-      this.imageData.data[pixelIndex] = color[0];
-      this.imageData.data[pixelIndex + 1] = color[1];
-      this.imageData.data[pixelIndex + 2] = color[2];
+      this.imageData.data[pixelIndex] = r;
+      this.imageData.data[pixelIndex + 1] = g;
+      this.imageData.data[pixelIndex + 2] = b;
       this.imageData.data[pixelIndex + 3] = 255;
     }
     this.ctx.putImageData(this.imageData, 0, 0);
