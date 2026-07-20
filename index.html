@@ -20,5 +20,15 @@
     </div>
     
     <script src="js/main.js" type="module"></script>
+    <!-- Аудио плеер. Слово loop заставляет музыку играть по кругу -->
+    <audio id="bg-music" loop>
+        <source src="audio/music.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Кнопка громкости -->
+    <div id="audio-control">
+        <div class="audio-icon">🎵</div>
+        <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.2">
+    </div>
 </body>
 </html>

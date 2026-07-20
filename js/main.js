@@ -83,5 +83,25 @@ function gameLoop() {
     renderer.draw(grid);
     requestAnimationFrame(gameLoop);
 }
+// --- АУДИО И МУЗЫКА ---
+const bgMusic = document.getElementById('bg-music');
+const volumeSlider = document.getElementById('volumeSlider');
+let musicStarted = false;
 
+// Делаем музыку не сильно громкой в начале
+bgMusic.volume = volumeSlider.value;
+
+// Эта штука следит за ползунком и меняет громкость
+volumeSlider.addEventListener('input', (e) => {
+    bgMusic.volume = e.target.value;
+});
+
+// Браузеры не разрешают включать музыку просто так. 
+// Поэтому музыка включится, когда ты первый раз кликнешь мышкой в игре.
+document.body.addEventListener('mousedown', () => {
+    if (!musicStarted) {
+        bgMusic.play();
+        musicStarted = true;
+    }
+});
 gameLoop();
