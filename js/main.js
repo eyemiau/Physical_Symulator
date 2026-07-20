@@ -51,31 +51,30 @@ tempSlider.addEventListener('input', (e) => {
     grid.temperature = newTemp;
 });
 
-// 2. Обработка мыши на Canvas
-// Вспомогательная функция для рисования
+// --- УПРАВЛЕНИЕ МЫШЬЮ (МОМЕНТАЛЬНОЕ РИСОВАНИЕ) ---
+
 function drawCell(e) {
-  if (!isDrawing) return;
-  const rect = renderer.canvas.getBoundingClientRect();
+    if (!isDrawing) return;
+    const rect = renderer.canvas.getBoundingClientRect();
+    const scaleX = renderer.canvas.width / rect.width;
+    const scaleY = renderer.canvas.height / rect.height;
 
-  const scaleX = renderer.canvas.width / rect.width;
-  const scaleY = renderer.canvas.height / rect.height;
+    const mouseX = Math.floor((e.clientX - rect.left) * scaleX);
+    const mouseY = Math.floor((e.clientY - rect.top) * scaleY);
 
-  const mouseX = Math.floor((e.clientX - rect.left) * scaleX);
-  const mouseY = Math.floor((e.clientY - rect.top) * scaleY);
-
-  for (let i = -1; i <= 1; i++) {
-    for (let j = -1; j <= 1; j++) {
-      grid.setCell(mouseX + i, mouseY + j, currentElement);
+    for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+            grid.setCell(mouseX + i, mouseY + j, currentElement);
+        }
     }
-  }
 }
 
 renderer.canvas.addEventListener('mousedown', (e) => {
     isDrawing = true;
-    drawCell(e); // Рисуем сразу при клике
+    drawCell(e); 
 });
 renderer.canvas.addEventListener('mousemove', drawCell);
-renderer.canvas.addEventListener('mouseup', () => isDrawing = false);
+window.addEventListener('mouseup', () => isDrawing = false);
 renderer.canvas.addEventListener('mouseleave', () => isDrawing = false);
 
 // --- ИГРОВОЙ ЦИКЛ ---
