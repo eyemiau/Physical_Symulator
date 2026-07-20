@@ -195,18 +195,22 @@ export class Grid {
 
         // --- СПЕЦИФИЧНЫЕ РЕАКЦИИ ---
         switch (type) {
-            // == БИОЛОГИЯ ==
+           // == БИОЛОГИЯ ==
             case ELEMENTS.DIRT:
             case ELEMENTS.PLANT:
             case ELEMENTS.SEED:
-                // Капиллярная диффузия
-                if (this.moisture[index] > 0) {
+            case ELEMENTS.FLOWER_SEED:
+            case ELEMENTS.FLOWER_STEM: { 
+                // 1. Капиллярная диффузия 
+                // ИСПРАВЛЕНИЕ: Исключаем стебли из диффузии, чтобы они не теряли заряд воды!
+                if (type !== ELEMENTS.FLOWER_STEM && this.moisture[index] > 0) {
                     const randomDir = CROSS_NEIGHBORS[Math.floor(Math.random() * CROSS_NEIGHBORS.length)];
                     const nx = x + randomDir[0];
                     const ny = y + randomDir[1];
                     const nType = this.getCell(nx, ny);
 
-                    if (nType === ELEMENTS.DIRT || nType === ELEMENTS.PLANT || nType === ELEMENTS.SEED) {
+                    if (nType === ELEMENTS.DIRT || nType === ELEMENTS.PLANT || nType === ELEMENTS.SEED || 
+                        nType === ELEMENTS.FLOWER_SEED || nType === ELEMENTS.FLOWER_STEM) {
                         const nIndex = this.getIndex(nx, ny);
                         if (this.moisture[index] > this.moisture[nIndex]) {
                             this.moisture[index]--;
@@ -217,13 +221,19 @@ export class Grid {
 
                 if (type === ELEMENTS.DIRT) {
                     for (let [dx, dy] of CROSS_NEIGHBORS) {
-                        if (this.getCell(x + dx, y + dy) === ELEMENTS.WATER) {
-                            this.setCell(x + dx, y + dy, ELEMENTS.AIR);
-                            this.moisture[index] = Math.min(255, this.moisture[index] + 50); 
+                        const nx = x + dx, ny = y + dy;
+                        const nType = this.getCell(nx, ny);
+                        
+                        // Соленая вода дает 100 влаги, обычная - 50.
+                        if (nType === ELEMENTS.WATER || nType === ELEMENTS.SALT_WATER) {
+                            this.setCell(nx, ny, ELEMENTS.AIR);
+                            const bonus = (nType === ELEMENTS.SALT_WATER) ? 100 : 50;
+                            this.moisture[index] = Math.min(255, this.moisture[index] + bonus); 
                             return true;
                         }
                     }
-                } 
+                }  
+
                 else if (type === ELEMENTS.SEED) {
                     if (this.moisture[index] > 10) {
                         this.setCell(x, y, ELEMENTS.PLANT);
@@ -252,7 +262,87 @@ export class Grid {
                         }
                     }
                 }
+
+                else if (type === ELEMENTS.FLOWER_SEED) {
+                    if (this.moisture[index] > 10) {
+                        this.setCell(x, y, ELEMENTS.FLOWER_STEM);
+                        this.moisture[index] -= 10; 
+                        this.durability[index] = 10 + Math.floor(Math.random() * 6); 
+                    }
+                }
+
+                else if (type === ELEMENTS.FLOWER_STEM) {
+                    if (this.moisture[index] >= 5 && Math.random() < 0.3) {
+                        const heightLeft = this.durability[index];
+                        
+                        if (heightLeft > 1) {
+                            if (this.isEmpty(x, y - 1)) {
+                                this.setCell(x, y - 1, ELEMENTS.FLOWER_STEM);
+                                const newIndex = this.getIndex(x, y - 1);
+                                this.durability[newIndex] = heightLeft - 1; 
+                                this.moisture[newIndex] = 5; 
+                                this.moisture[index] -= 5;
+                            }
+                        } else if (heightLeft === 1) {
+                            const colorIdx = Math.floor(Math.random() * 4) + 1; 
+                            const bloom = (bx, by) => {
+                                if (this.isEmpty(bx, by)) {
+                                    this.setCell(bx, by, ELEMENTS.FLOWER_PETAL); // Не забудь добавить ID в elements.js!
+                                    this.moisture[this.getIndex(bx, by)] = colorIdx; 
+                                }
+                            };
+                            bloom(x - 1, y - 1); bloom(x, y - 1); bloom(x + 1, y - 1); 
+                            bloom(x - 1, y - 2);                  bloom(x + 1, y - 2); 
+                            
+                            this.durability[index] = 0; 
+                            this.moisture[index] -= 5;
+                        }
+                    }
+                }
+                break; 
+            }
+                    
+            // == ЖИВОТНЫЙ МИР (ИИ) ==
+            case ELEMENTS.BUG: {
+                // Если жук только родился (нарисован кистью), даем ему максимум сытости
+                if (this.durability[index] === 0) {
+                    this.durability[index] = 255;
+                }
+
+                let ateSomething = false;
+                
+                // 1. Поиск еды (как огонь ищет горючее)
+                for (let [dx, dy] of CROSS_NEIGHBORS) {
+                    const nx = x + dx, ny = y + dy;
+                    const neighborType = this.getCell(nx, ny);
+                    const nProps = PROPERTIES[neighborType] || {};
+
+                    // Если сосед - органика, съедаем!
+                    if (nProps.isOrganic) {
+                        this.setCell(nx, ny, ELEMENTS.BUG); // Размножаемся в съеденную клетку
+                        this.durability[index] = 255; // Наелись!
+                        this.durability[this.getIndex(nx, ny)] = 255; // Новорожденный тоже сыт
+                        
+                        ateSomething = true;
+                        return true; 
+                    }
+                }
+                
+                // 2. Логика голода
+                if (!ateSomething) {
+                    // Тратим энергию не каждый кадр (иначе умрут за пару секунд), а с шансом 10%
+                    if (Math.random() < 0.6) {
+                        this.durability[index]--;
+                    }
+                    
+                    // 3. Голодная смерть (превращается в удобрение - землю)
+                    if (this.durability[index] <= 1) {
+                        this.setCell(x, y, ELEMENTS.DIRT);
+                        return true;
+                    }
+                }
                 break;
+            }
 
             // == ХИМИЯ И ТЕРМОДИНАМИКА ==
             case ELEMENTS.FIRE:

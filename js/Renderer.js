@@ -64,6 +64,15 @@ export class Renderer {
         b = Math.max(0, b - darkenAmount);
       }
 
+      // --- ШЕЙДЕР РАЗНОЦВЕТНЫХ ЛЕПЕСТКОВ ---
+      if (type === ELEMENTS.FLOWER_PETAL) {
+        const colorIdx = grid.moisture[i];
+        if (colorIdx === 1) { r = 255; g = 50;  b = 50; }       // Красный
+        else if (colorIdx === 2) { r = 255; g = 215; b = 0; }   // Желтый
+        else if (colorIdx === 3) { r = 65;  g = 105; b = 225; } // Синий
+        else if (colorIdx === 4) { r = 148; g = 0;   b = 211; } // Фиолетовый 
+      }
+      
       const pixelIndex = i * 4;
       this.imageData.data[pixelIndex] = r;
       this.imageData.data[pixelIndex + 1] = g;

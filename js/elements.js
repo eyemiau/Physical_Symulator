@@ -23,6 +23,10 @@ export const ELEMENTS = {
     ICE: 20,
     SALT: 21, 
     SALT_WATER: 22,    
+    BUG: 23,
+    FLOWER_SEED: 24,
+    FLOWER_STEM: 25,
+    FLOWER_PETAL: 26,
 };
 
 // --- ЦВЕТА ЭЛЕМЕНТОВ (RGB) ---
@@ -49,7 +53,11 @@ export const COLORS = {
     [ELEMENTS.PLANT]: [34, 139, 34],
     [ELEMENTS.ICE]: [173, 216, 230],   
     [ELEMENTS.SALT]: [245, 245, 245], 
-    [ELEMENTS.SALT_WATER]: [20, 160, 200],    
+    [ELEMENTS.SALT_WATER]: [20, 160, 200],     
+    [ELEMENTS.BUG]: [160, 50, 50],         // Красно-бурый жучок
+    [ELEMENTS.FLOWER_SEED]: [255, 215, 0], // Золотая семечка
+    [ELEMENTS.FLOWER_STEM]: [50, 205, 50], // Салатовый стебель
+    [ELEMENTS.FLOWER_PETAL]: [255, 105, 180],     
 };
 
 // --- ФИЗИЧЕСКИЕ И ХИМИЧЕСКИЕ СВОЙСТВА ---
@@ -77,12 +85,15 @@ export const PROPERTIES = {
     [ELEMENTS.DIRT]: { 
         isPowder: true,
          density: 1300 
-        },
+    },
     [ELEMENTS.SEED]: { 
         isPowder: true, 
         density: 1100 
     },
-
+    [ELEMENTS.FLOWER_SEED]: { 
+        isPowder: true, 
+        density: 1100 
+    },
     [ELEMENTS.SALT]: { 
         isPowder: true, 
         density: 2160 
@@ -183,5 +194,23 @@ export const PROPERTIES = {
     [ELEMENTS.STEAM]: { isLiquid: false, isGas: true, density: 0.6},
     [ELEMENTS.FIRE]: { isLiquid: false, isGas: true, isIgniter: true, heatRadius: 7, density: 0.3},
     [ELEMENTS.TOXIC_GAS]: { isLiquid: false, isGas: true, density: 1.5},
-    [ELEMENTS.PLANT]: { isLiquid: false, isGas: false, isFlammable: true, density: 600 },
+    [ELEMENTS.PLANT]: { isLiquid: false, isGas: false, isFlammable: true, density: 600, isOrganic: true, },
+    [ELEMENTS.FLOWER_STEM]: { 
+        isLiquid: false, 
+        isGas: false, 
+        isFlammable: true, 
+        density: 600,
+        isOrganic: true,        
+    },
+    [ELEMENTS.FLOWER_PETAL]: { 
+        isLiquid: false, 
+        isGas: false, 
+        isFlammable: true, 
+        density: 100,
+        isOrganic: true,
+    },
+    [ELEMENTS.BUG]: { 
+        isPowder: false, 
+        density: 1200 
+    },
 };
