@@ -1,6 +1,5 @@
 import { ELEMENTS, PROPERTIES } from './elements.js';
 
-// Выносим соседей в константу для оптимизации Garbage Collector
 const CROSS_NEIGHBORS = [[0, 1], [1, 0], [0, -1], [-1, 0]];
 
 export class Grid {
@@ -58,7 +57,6 @@ export class Grid {
         const ny = y + dy;
         const targetType = this.getCell(nx, ny);
 
-        // Игнорируем статичные стены (WALL)
         if (PROPERTIES[targetType]?.isStatic) return false;
 
         if (targetType === ELEMENTS.AIR) {
@@ -82,7 +80,6 @@ export class Grid {
         const ny = y + dy;
         const targetType = this.getCell(nx, ny);
 
-        // Игнорируем статичные стены (WALL)
         if (PROPERTIES[targetType]?.isStatic) return false;
 
         if (targetType === ELEMENTS.AIR) {
@@ -90,7 +87,6 @@ export class Grid {
                 this.swap(x, y, nx, ny);
                 return true;
             }
-            // Твердые объекты (дерево) и жидкости НЕ могут всплывать в пустой воздух!
             return false;
         }
 
@@ -117,14 +113,11 @@ export class Grid {
                 if (this.updated[index] === this.frameCounter) continue;
 
                 const type = this.types[index];
-
-                // УБРАЛИ старый хардкод STONE! Пропускаем только Воздух.
                 if (type === ELEMENTS.AIR) continue;
 
                 const props = PROPERTIES[type] || {};
 
-                if (props.isStatic) continue;
-
+                // Убрали isStatic, чтобы цветы продолжали расти и проводить воду
                 this.updated[index] = this.frameCounter;
 
                 if (this.processReactions(x, y, type, props)) continue;
@@ -137,39 +130,31 @@ export class Grid {
         const index = this.getIndex(x, y);
 
         // --- ГЛОБАЛЬНЫЕ РЕАКЦИИ ---
-        // 1. Испарение от высокой температуры          
         if (props.canEvaporate && this.temperature >= 80) {
             if (Math.random() < 0.08 * (this.temperature / 160)) {
-                
                 if (type === ELEMENTS.SALT_WATER) {
-                    // 50% шанс, что останется кристаллик соли (чтобы не засыпать весь экран)
                     this.setCell(x, y, Math.random() > 0.5 ? ELEMENTS.SALT : props.evaporateTo);
                 } else {
-                    // Обычное испарение (вода -> пар)
                     this.setCell(x, y, props.evaporateTo); 
                 }
                 return true;
             }
         }
 
-        // 2. Замерзание от низкой температуры
         if (props.canFreeze && this.temperature <= props.freezeTemp) {
-            // Шанс 10% за кадр позволяет озеру замерзать красивыми пятнами, а не сплошным блоком за 1 мс
             if (Math.random() < 0.1) {
                 this.setCell(x, y, props.freezeTo); 
                 return true;
             }
         }
 
-        // 3. Таяние от повышения температуры
         if (props.canMelt && this.temperature > props.meltTemp) {
-            if (Math.random() < 0.05) { // Тает чуть медленнее, чем замерзает
+            if (Math.random() < 0.05) {
                 this.setCell(x, y, props.meltTo); 
                 return true;
             }
         }
         
-        // 4. Радиусное тепло (кипячение вокруг источника)
         if (props.heatRadius) {
             for (let dy = -props.heatRadius; dy <= props.heatRadius; dy++) {
                 for (let dx = -props.heatRadius; dx <= props.heatRadius; dx++) {
@@ -183,7 +168,6 @@ export class Grid {
             }
         }
 
-        //5. Сжигание
         if (props.isIgniter) {
             for (let [dx, dy] of CROSS_NEIGHBORS) {
                 const nx = x + dx, ny = y + dy;
@@ -195,14 +179,13 @@ export class Grid {
 
         // --- СПЕЦИФИЧНЫЕ РЕАКЦИИ ---
         switch (type) {
-           // == БИОЛОГИЯ ==
+            // == БИОЛОГИЯ ==
             case ELEMENTS.DIRT:
             case ELEMENTS.PLANT:
             case ELEMENTS.SEED:
             case ELEMENTS.FLOWER_SEED:
             case ELEMENTS.FLOWER_STEM: { 
-                // 1. Капиллярная диффузия 
-                // ИСПРАВЛЕНИЕ: Исключаем стебли из диффузии, чтобы они не теряли заряд воды!
+                // 1. Капиллярная диффузия (исключаем стебли, чтобы не было утечки воды)
                 if (type !== ELEMENTS.FLOWER_STEM && this.moisture[index] > 0) {
                     const randomDir = CROSS_NEIGHBORS[Math.floor(Math.random() * CROSS_NEIGHBORS.length)];
                     const nx = x + randomDir[0];
@@ -224,7 +207,6 @@ export class Grid {
                         const nx = x + dx, ny = y + dy;
                         const nType = this.getCell(nx, ny);
                         
-                        // Соленая вода дает 100 влаги, обычная - 50.
                         if (nType === ELEMENTS.WATER || nType === ELEMENTS.SALT_WATER) {
                             this.setCell(nx, ny, ELEMENTS.AIR);
                             const bonus = (nType === ELEMENTS.SALT_WATER) ? 100 : 50;
@@ -233,7 +215,6 @@ export class Grid {
                         }
                     }
                 }  
-
                 else if (type === ELEMENTS.SEED) {
                     if (this.moisture[index] > 10) {
                         this.setCell(x, y, ELEMENTS.PLANT);
@@ -241,7 +222,7 @@ export class Grid {
                     }
                 } 
                 else if (type === ELEMENTS.PLANT) {
-                    if (this.moisture[index] >= 10 && Math.random() < 0.4) {
+                    if (this.moisture[index] >= 11 && Math.random() < 0.43) {
                         const growX = x + (Math.floor(Math.random() * 3) - 1); 
                         const growY = y - 1;
 
@@ -262,7 +243,6 @@ export class Grid {
                         }
                     }
                 }
-
                 else if (type === ELEMENTS.FLOWER_SEED) {
                     if (this.moisture[index] > 10) {
                         this.setCell(x, y, ELEMENTS.FLOWER_STEM);
@@ -270,13 +250,14 @@ export class Grid {
                         this.durability[index] = 10 + Math.floor(Math.random() * 6); 
                     }
                 }
-
                 else if (type === ELEMENTS.FLOWER_STEM) {
                     if (this.moisture[index] >= 5 && Math.random() < 0.3) {
                         const heightLeft = this.durability[index];
                         
                         if (heightLeft > 1) {
-                            if (this.isEmpty(x, y - 1)) {
+                            const cellAbove = this.getCell(x, y - 1);
+                            // Пробиваемся сквозь жидкости!
+                            if (cellAbove === ELEMENTS.AIR || cellAbove === ELEMENTS.WATER || cellAbove === ELEMENTS.SALT_WATER) {
                                 this.setCell(x, y - 1, ELEMENTS.FLOWER_STEM);
                                 const newIndex = this.getIndex(x, y - 1);
                                 this.durability[newIndex] = heightLeft - 1; 
@@ -286,8 +267,9 @@ export class Grid {
                         } else if (heightLeft === 1) {
                             const colorIdx = Math.floor(Math.random() * 4) + 1; 
                             const bloom = (bx, by) => {
-                                if (this.isEmpty(bx, by)) {
-                                    this.setCell(bx, by, ELEMENTS.FLOWER_PETAL); // Не забудь добавить ID в elements.js!
+                                const cType = this.getCell(bx, by);
+                                if (cType === ELEMENTS.AIR || cType === ELEMENTS.WATER || cType === ELEMENTS.SALT_WATER) {
+                                    this.setCell(bx, by, ELEMENTS.FLOWER_PETAL);
                                     this.moisture[this.getIndex(bx, by)] = colorIdx; 
                                 }
                             };
@@ -301,50 +283,64 @@ export class Grid {
                 }
                 break; 
             }
-                    
+
             // == ЖИВОТНЫЙ МИР (ИИ) ==
             case ELEMENTS.BUG: {
-                // Если жук только родился (нарисован кистью), даем ему максимум сытости
                 if (this.durability[index] === 0) {
-                    this.durability[index] = 255;
+                    this.durability[index] = 100; // Максимальная сытость при рождении
                 }
 
                 let ateSomething = false;
                 
-                // 1. Поиск еды (как огонь ищет горючее)
+                // 1. Поиск еды
                 for (let [dx, dy] of CROSS_NEIGHBORS) {
                     const nx = x + dx, ny = y + dy;
                     const neighborType = this.getCell(nx, ny);
                     const nProps = PROPERTIES[neighborType] || {};
 
-                    // Если сосед - органика, съедаем!
                     if (nProps.isOrganic) {
-                        this.setCell(nx, ny, ELEMENTS.BUG); // Размножаемся в съеденную клетку
-                        this.durability[index] = 255; // Наелись!
-                        this.durability[this.getIndex(nx, ny)] = 255; // Новорожденный тоже сыт
+                        this.setCell(nx, ny, ELEMENTS.BUG); // Размножение!
+                        this.durability[index] = 255; 
+                        this.durability[this.getIndex(nx, ny)] = 255; 
                         
                         ateSomething = true;
                         return true; 
                     }
                 }
                 
-                // 2. Логика голода
+                // 2. Логика голода и РОЕВОГО ДВИЖЕНИЯ
                 if (!ateSomething) {
-                    // Тратим энергию не каждый кадр (иначе умрут за пару секунд), а с шансом 10%
-                    if (Math.random() < 0.6) {
+                    if (Math.random() < 0.5) {
                         this.durability[index]--;
                     }
                     
-                    // 3. Голодная смерть (превращается в удобрение - землю)
                     if (this.durability[index] <= 1) {
-                        this.setCell(x, y, ELEMENTS.DIRT);
+                        this.setCell(x, y, ELEMENTS.DIRT); // Умер от голода
+                        return true;
+                    }
+
+                    // Броуновское (хаотичное) движение роя!
+                    // Жуки мечутся во все стороны, создавая эффект облака
+                    if (Math.random() < 0.7) {
+                        const dx = Math.floor(Math.random() * 3) - 1; 
+                        const dy = Math.floor(Math.random() * 3) - 1; 
+                        if (dx !== 0 || dy !== 0) {
+                            if (this.isEmpty(x + dx, y + dy)) {
+                                this.swap(x, y, x + dx, y + dy);
+                                return true;
+                            }
+                        }
+                    }
+                    
+                    // Легкая гравитация - рой не должен улетать в космос, он медленно оседает
+                    if (Math.random() < 0.4 && this.isEmpty(x, y + 1)) {
+                        this.swap(x, y, x, y + 1);
                         return true;
                     }
                 }
                 break;
             }
 
-            // == ХИМИЯ И ТЕРМОДИНАМИКА ==
             case ELEMENTS.FIRE:
                 if (Math.random() < 0.1) {
                     this.setCell(x, y, Math.random() < 0.1 ? ELEMENTS.ASH : ELEMENTS.AIR);
@@ -374,9 +370,7 @@ export class Grid {
                 for (let [dx, dy] of CROSS_NEIGHBORS) {
                     const nx = x + dx, ny = y + dy;
                     if (this.getCell(nx, ny) === ELEMENTS.WATER) {
-                        // Превращаем пресную воду в соленую (визуально она изменит цвет)
                         this.setCell(nx, ny, ELEMENTS.SALT_WATER);
-                        // Сама крупинка соли исчезает, "растворившись"
                         this.setCell(x, y, ELEMENTS.AIR);
                         return true; 
                     }
@@ -449,7 +443,6 @@ export class Grid {
         else if (props.isGas) {
             if (Math.random() > 0.27) return; 
             
-            // Газам разрешаем летать в воздухе (передаем true)
             if (this.tryBuoyancy(x, y, 0, -1, myDensity, true)) return;
             if (this.tryBuoyancy(x, y, dir, -1, myDensity, true)) return;
             if (this.tryBuoyancy(x, y, -dir, -1, myDensity, true)) return;

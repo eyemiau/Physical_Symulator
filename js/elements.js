@@ -22,11 +22,11 @@ export const ELEMENTS = {
     PLANT: 19, 
     ICE: 20,
     SALT: 21, 
-    SALT_WATER: 22,    
+    SALT_WATER: 22,
     BUG: 23,
     FLOWER_SEED: 24,
     FLOWER_STEM: 25,
-    FLOWER_PETAL: 26,
+    FLOWER_PETAL: 26
 };
 
 // --- ЦВЕТА ЭЛЕМЕНТОВ (RGB) ---
@@ -53,11 +53,11 @@ export const COLORS = {
     [ELEMENTS.PLANT]: [34, 139, 34],
     [ELEMENTS.ICE]: [173, 216, 230],   
     [ELEMENTS.SALT]: [245, 245, 245], 
-    [ELEMENTS.SALT_WATER]: [20, 160, 200],     
-    [ELEMENTS.BUG]: [160, 50, 50],         // Красно-бурый жучок
-    [ELEMENTS.FLOWER_SEED]: [255, 215, 0], // Золотая семечка
-    [ELEMENTS.FLOWER_STEM]: [50, 205, 50], // Салатовый стебель
-    [ELEMENTS.FLOWER_PETAL]: [255, 105, 180],     
+    [ELEMENTS.SALT_WATER]: [20, 160, 200], 
+    [ELEMENTS.BUG]: [160, 50, 50],         
+    [ELEMENTS.FLOWER_SEED]: [255, 215, 0], 
+    [ELEMENTS.FLOWER_STEM]: [50, 205, 50], 
+    [ELEMENTS.FLOWER_PETAL]: [255, 105, 180] 
 };
 
 // --- ФИЗИЧЕСКИЕ И ХИМИЧЕСКИЕ СВОЙСТВА ---
@@ -65,152 +65,37 @@ export const PROPERTIES = {
     [ELEMENTS.AIR]: {density: 1.2},
 
     // -- СЫПУЧЕЕ
-    [ELEMENTS.SAND]: { 
-        isPowder: true, 
-        isLiquid: false, 
-        isGas: false, 
-        density: 1600
-    },
-    [ELEMENTS.ASH]: { 
-        isPowder: true, 
-        isLiquid: false, 
-        isGas: false,
-         density: 1600
-    },
-    [ELEMENTS.GUNPOWDER]: { 
-        isPowder: true, 
-        explosionRadius: 10, 
-        density: 1700
-    }, 
-    [ELEMENTS.DIRT]: { 
-        isPowder: true,
-         density: 1300 
-    },
-    [ELEMENTS.SEED]: { 
-        isPowder: true, 
-        density: 1100 
-    },
-    [ELEMENTS.FLOWER_SEED]: { 
-        isPowder: true, 
-        density: 1100 
-    },
-    [ELEMENTS.SALT]: { 
-        isPowder: true, 
-        density: 2160 
-    },
+    [ELEMENTS.SAND]: { isPowder: true, isLiquid: false, isGas: false, density: 1600 },
+    [ELEMENTS.ASH]: { isPowder: true, isLiquid: false, isGas: false, density: 1600 },
+    [ELEMENTS.GUNPOWDER]: { isPowder: true, explosionRadius: 10, density: 1700 }, 
+    [ELEMENTS.DIRT]: { isPowder: true, density: 1300 },
+    [ELEMENTS.SEED]: { isPowder: true, density: 1100, isOrganic: true },
+    [ELEMENTS.SALT]: { isPowder: true, density: 2160 },
+    [ELEMENTS.FLOWER_SEED]: { isPowder: true, density: 1100, isOrganic: true },
+
+    // НОВЫЙ ЖУК (убрали isPowder, теперь это сущность со своей физикой)
+    [ELEMENTS.BUG]: { isLiquid: false, isGas: false, density: 1200 }, 
 
     // -- ЖИДКОСТИ  
-    [ELEMENTS.WATER]: { 
-        isLiquid: true, 
-        isGas: false, 
-        canEvaporate: true, 
-        evaporateTo: ELEMENTS.STEAM, 
-        canFreeze: true, 
-        freezeTo: ELEMENTS.ICE, 
-        freezeTemp: 0, 
-        density: 1000,
-    },
-
-    [ELEMENTS.SALT_WATER]: { 
-        isLiquid: true, 
-        isGas: false, 
-        density: 1030, // Тяжелее обычной воды (1000)!
-        canEvaporate: true, 
-        evaporateTo: ELEMENTS.STEAM // Пар улетит... а что останется? Доработаем ниже!
-    },
-
-    [ELEMENTS.SOLUTION]: { 
-        isLiquid: true, 
-        isGas: false, 
-        canEvaporate: true, 
-        evaporateTo: ELEMENTS.CRYSTAL, 
-        density: 1130
-    },
-
-    [ELEMENTS.ACID]: { 
-        isLiquid: true, 
-        canEvaporate: true, 
-        evaporateTo: ELEMENTS.TOXIC_GAS, 
-        density: 1200
-    },
-
-    [ELEMENTS.OIL]: { 
-        isLiquid: true, 
-        isGas: false, 
-        isFlammable: true,
-        density: 800
-    },
-
-    [ELEMENTS.LAVA]: { 
-        isLiquid: true, 
-        isGas: false, 
-        isIgniter: true, 
-        heatRadius: 10, 
-        canFreeze: true,
-        freezeTo: ELEMENTS.STONE,
-        freezeTemp: 50,
-        density: 3100
-    },
+    [ELEMENTS.WATER]: { isLiquid: true, isGas: false, canEvaporate: true, evaporateTo: ELEMENTS.STEAM, canFreeze: true, freezeTo: ELEMENTS.ICE, freezeTemp: 0, density: 1000 },
+    [ELEMENTS.SALT_WATER]: { isLiquid: true, isGas: false, density: 1030, canEvaporate: true, evaporateTo: ELEMENTS.STEAM },
+    [ELEMENTS.SOLUTION]: { isLiquid: true, isGas: false, canEvaporate: true, evaporateTo: ELEMENTS.CRYSTAL, density: 1130 },
+    [ELEMENTS.ACID]: { isLiquid: true, canEvaporate: true, evaporateTo: ELEMENTS.TOXIC_GAS, density: 1200 },
+    [ELEMENTS.OIL]: { isLiquid: true, isGas: false, isFlammable: true, density: 800 },
+    [ELEMENTS.LAVA]: { isLiquid: true, isGas: false, isIgniter: true, heatRadius: 10, canFreeze: true, freezeTo: ELEMENTS.STONE, freezeTemp: 50, density: 3100 },
 
     // -- ТВЁРДЫЕ
-    [ELEMENTS.STONE]: { 
-        isLiquid: false, 
-        isGas: false,         
-        density: 2500
-    },
-
-    [ELEMENTS.CRYSTAL]: { 
-        isLiquid: false, 
-        isGas: false, 
-        isAcidResistant: true, 
-        density: 2650
-    },
-
-    [ELEMENTS.WOOD]: { 
-        isLiquid: false, 
-        isGas: false, 
-        isFlammable: true, 
-        density: 600
-    },
-
-    [ELEMENTS.ICE]: { 
-        isLiquid: false, 
-        isGas: false, 
-        canMelt: true, 
-        meltTo: ELEMENTS.WATER,
-        meltTemp: 0, 
-        density: 920 
-    },
-
-    [ELEMENTS.WALL]: { 
-        isLiquid: false, 
-        isGas: false, 
-        density: Infinity, 
-        isStatic: true, 
-        isAcidResistant: true 
-    },
+    [ELEMENTS.STONE]: { isLiquid: false, isGas: false, density: 2500 },
+    [ELEMENTS.CRYSTAL]: { isLiquid: false, isGas: false, isAcidResistant: true, density: 2650 },
+    [ELEMENTS.WOOD]: { isLiquid: false, isGas: false, isFlammable: true, density: 600 },
+    [ELEMENTS.ICE]: { isLiquid: false, isGas: false, canMelt: true, meltTo: ELEMENTS.WATER, meltTemp: 0, density: 920 },
+    [ELEMENTS.WALL]: { isLiquid: false, isGas: false, density: Infinity, isStatic: true, isAcidResistant: true },
+    [ELEMENTS.FLOWER_STEM]: { isLiquid: false, isGas: false, isFlammable: true, density: 600, isOrganic: true },
+    [ELEMENTS.FLOWER_PETAL]: { isLiquid: false, isGas: false, isFlammable: true, density: 100, isOrganic: true },
 
     // -- ГАЗЫ И ПРОЧЕЕ
     [ELEMENTS.STEAM]: { isLiquid: false, isGas: true, density: 0.6},
     [ELEMENTS.FIRE]: { isLiquid: false, isGas: true, isIgniter: true, heatRadius: 7, density: 0.3},
     [ELEMENTS.TOXIC_GAS]: { isLiquid: false, isGas: true, density: 1.5},
-    [ELEMENTS.PLANT]: { isLiquid: false, isGas: false, isFlammable: true, density: 600, isOrganic: true, },
-    [ELEMENTS.FLOWER_STEM]: { 
-        isLiquid: false, 
-        isGas: false, 
-        isFlammable: true, 
-        density: 600,
-        isOrganic: true,        
-    },
-    [ELEMENTS.FLOWER_PETAL]: { 
-        isLiquid: false, 
-        isGas: false, 
-        isFlammable: true, 
-        density: 100,
-        isOrganic: true,
-    },
-    [ELEMENTS.BUG]: { 
-        isPowder: false, 
-        density: 1200 
-    },
+    [ELEMENTS.PLANT]: { isLiquid: false, isGas: false, isFlammable: true, density: 600, isOrganic: true },
 };

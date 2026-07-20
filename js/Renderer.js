@@ -44,24 +44,26 @@ export class Renderer {
       const type = grid.types[i];
       const color = COLORS[type];
       
-      // Инициализируем базовый цвет
       let r = color[0];
       let g = color[1];
       let b = color[2];
 
-      // --- НАШ МИНИ-ШЕЙДЕР ВЛАЖНОСТИ ---
-      // Если это Почва, мы динамически затемняем её на основе массива moisture
       if (type === ELEMENTS.DIRT) {
-        const moisture = grid.moisture[i]; // Значение от 0 до 255
-        
-        // Вычисляем коэффициент затемнения. 
-        // При максимальной влажности (255) мы отнимем 50 единиц яркости от каждого канала
+        const moisture = grid.moisture[i];
         const darkenAmount = (moisture / 255) * 50; 
         
-        // Math.max(0, ...) спасает нас от отрицательных значений RGB
         r = Math.max(0, r - darkenAmount);
         g = Math.max(0, g - darkenAmount);
         b = Math.max(0, b - darkenAmount);
+      }
+
+      // --- ШЕЙДЕР ЖУКОВ (МЕРЦАНИЕ РОЯ) ---
+      if (type === ELEMENTS.BUG) {
+        // Добавляем случайное пульсирующее отклонение цвета для создания эффекта "живого роя"
+        const flicker = (Math.random() * 80) - 40; 
+        r = Math.max(0, Math.min(255, r + flicker));
+        g = Math.max(0, Math.min(255, g + flicker));
+        b = Math.max(0, Math.min(255, b + flicker));
       }
 
       // --- ШЕЙДЕР РАЗНОЦВЕТНЫХ ЛЕПЕСТКОВ ---
@@ -70,9 +72,9 @@ export class Renderer {
         if (colorIdx === 1) { r = 255; g = 50;  b = 50; }       // Красный
         else if (colorIdx === 2) { r = 255; g = 215; b = 0; }   // Желтый
         else if (colorIdx === 3) { r = 65;  g = 105; b = 225; } // Синий
-        else if (colorIdx === 4) { r = 148; g = 0;   b = 211; } // Фиолетовый 
+        else if (colorIdx === 4) { r = 148; g = 0;   b = 211; } // Фиолетовый
       }
-      
+
       const pixelIndex = i * 4;
       this.imageData.data[pixelIndex] = r;
       this.imageData.data[pixelIndex + 1] = g;
