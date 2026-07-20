@@ -53,13 +53,13 @@ export class Grid {
         this.updated[index2] = this.frameCounter;
     }
 
-    // УНИВЕРСАЛЬНЫЙ ДВИГАТЕЛЬ ПАДЕНИЯ И ВЫТЕСНЕНИЯ
     tryDisplace(x, y, dx, dy, myDensity) {
         const nx = x + dx;
         const ny = y + dy;
         const targetType = this.getCell(nx, ny);
-        
-        if (targetType === ELEMENTS.STONE) return false;
+
+        // Игнорируем статичные стены (WALL)
+        if (PROPERTIES[targetType]?.isStatic) return false;
 
         if (targetType === ELEMENTS.AIR) {
             this.swap(x, y, nx, ny);
@@ -73,20 +73,25 @@ export class Grid {
             this.swap(x, y, nx, ny);
             return true;
         }
+
         return false;
     }
 
-    // УНИВЕРСАЛЬНЫЙ ДВИГАТЕЛЬ ВСПЛЫТИЯ (Для газов)
-    tryBuoyancy(x, y, dx, dy, myDensity) {
+    tryBuoyancy(x, y, dx, dy, myDensity, isGas = false) {
         const nx = x + dx;
         const ny = y + dy;
         const targetType = this.getCell(nx, ny);
-        
-        if (targetType === ELEMENTS.STONE) return false;
+
+        // Игнорируем статичные стены (WALL)
+        if (PROPERTIES[targetType]?.isStatic) return false;
 
         if (targetType === ELEMENTS.AIR) {
-            this.swap(x, y, nx, ny);
-            return true;
+            if (isGas) {
+                this.swap(x, y, nx, ny);
+                return true;
+            }
+            // Твердые объекты (дерево) и жидкости НЕ могут всплывать в пустой воздух!
+            return false;
         }
 
         const targetProps = PROPERTIES[targetType] || {};
@@ -96,6 +101,7 @@ export class Grid {
             this.swap(x, y, nx, ny);
             return true;
         }
+
         return false;
     }
 
@@ -111,10 +117,15 @@ export class Grid {
                 if (this.updated[index] === this.frameCounter) continue;
 
                 const type = this.types[index];
-                if (type === ELEMENTS.AIR || type === ELEMENTS.STONE) continue;
 
-                this.updated[index] = this.frameCounter; 
+                // УБРАЛИ старый хардкод STONE! Пропускаем только Воздух.
+                if (type === ELEMENTS.AIR) continue;
+
                 const props = PROPERTIES[type] || {};
+
+                if (props.isStatic) continue;
+
+                this.updated[index] = this.frameCounter;
 
                 if (this.processReactions(x, y, type, props)) continue;
                 this.processPhysics(x, y, props);
@@ -126,13 +137,39 @@ export class Grid {
         const index = this.getIndex(x, y);
 
         // --- ГЛОБАЛЬНЫЕ РЕАКЦИИ ---
+        // 1. Испарение от высокой температуры          
         if (props.canEvaporate && this.temperature >= 80) {
             if (Math.random() < 0.08 * (this.temperature / 160)) {
-                this.setCell(x, y, props.evaporateTo); 
+                
+                if (type === ELEMENTS.SALT_WATER) {
+                    // 50% шанс, что останется кристаллик соли (чтобы не засыпать весь экран)
+                    this.setCell(x, y, Math.random() > 0.5 ? ELEMENTS.SALT : props.evaporateTo);
+                } else {
+                    // Обычное испарение (вода -> пар)
+                    this.setCell(x, y, props.evaporateTo); 
+                }
                 return true;
             }
         }
 
+        // 2. Замерзание от низкой температуры
+        if (props.canFreeze && this.temperature <= props.freezeTemp) {
+            // Шанс 10% за кадр позволяет озеру замерзать красивыми пятнами, а не сплошным блоком за 1 мс
+            if (Math.random() < 0.1) {
+                this.setCell(x, y, props.freezeTo); 
+                return true;
+            }
+        }
+
+        // 3. Таяние от повышения температуры
+        if (props.canMelt && this.temperature > props.meltTemp) {
+            if (Math.random() < 0.05) { // Тает чуть медленнее, чем замерзает
+                this.setCell(x, y, props.meltTo); 
+                return true;
+            }
+        }
+        
+        // 4. Радиусное тепло (кипячение вокруг источника)
         if (props.heatRadius) {
             for (let dy = -props.heatRadius; dy <= props.heatRadius; dy++) {
                 for (let dx = -props.heatRadius; dx <= props.heatRadius; dx++) {
@@ -146,6 +183,7 @@ export class Grid {
             }
         }
 
+        //5. Сжигание
         if (props.isIgniter) {
             for (let [dx, dy] of CROSS_NEIGHBORS) {
                 const nx = x + dx, ny = y + dy;
@@ -242,6 +280,19 @@ export class Grid {
                 }
                 break;
 
+            case ELEMENTS.SALT: 
+                for (let [dx, dy] of CROSS_NEIGHBORS) {
+                    const nx = x + dx, ny = y + dy;
+                    if (this.getCell(nx, ny) === ELEMENTS.WATER) {
+                        // Превращаем пресную воду в соленую (визуально она изменит цвет)
+                        this.setCell(nx, ny, ELEMENTS.SALT_WATER);
+                        // Сама крупинка соли исчезает, "растворившись"
+                        this.setCell(x, y, ELEMENTS.AIR);
+                        return true; 
+                    }
+                }
+                break;   
+
             case ELEMENTS.ACID:
                 for (let [dx, dy] of CROSS_NEIGHBORS) {
                     const nx = x + dx, ny = y + dy;
@@ -291,6 +342,8 @@ export class Grid {
         const dir = Math.random() > 0.5 ? 1 : -1;
         const myDensity = props.density || 0;
 
+        if (props.isStatic || (!props.isPowder && !props.isLiquid && !props.isGas)) return;
+
         if (props.isPowder) {
             if (this.tryDisplace(x, y, 0, 1, myDensity)) return;
             if (this.tryDisplace(x, y, dir, 1, myDensity)) return;
@@ -305,9 +358,11 @@ export class Grid {
         } 
         else if (props.isGas) {
             if (Math.random() > 0.27) return; 
-            if (this.tryBuoyancy(x, y, 0, -1, myDensity)) return;
-            if (this.tryBuoyancy(x, y, dir, -1, myDensity)) return;
-            if (this.tryBuoyancy(x, y, -dir, -1, myDensity)) return;
+            
+            // Газам разрешаем летать в воздухе (передаем true)
+            if (this.tryBuoyancy(x, y, 0, -1, myDensity, true)) return;
+            if (this.tryBuoyancy(x, y, dir, -1, myDensity, true)) return;
+            if (this.tryBuoyancy(x, y, -dir, -1, myDensity, true)) return;
             if (this.tryDisplace(x, y, dir, 0, myDensity)) return;
             if (this.tryDisplace(x, y, -dir, 0, myDensity)) return;
         }
