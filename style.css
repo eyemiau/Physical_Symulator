@@ -1,160 +1,329 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
 body {
   background-color: #111;
+  background-image: url('img/bg_forest.png'); 
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
   margin: 0;
-  font-family: sans-serif;
   overflow: hidden;
+  
+  /* Пиксельный шрифт для всей страницы */
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #fff;
+  text-shadow: 2px 2px 0px #000;
 }
 
 #game-container {
   display: flex;
-  flex-direction: column;
-  gap: 15px;
+  flex-direction: row;
+  gap: 120px; 
   width: 100%;
   height: 100%;
   max-width: 100vw;
   max-height: 100vh;
-  padding: 10px;
+  padding: 20px;
   align-items: center;
   justify-content: center;
 }
 
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  padding: 15px;
-  background: #222;
-  border: 2px solid #444;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  max-width: 95vw;
-  overflow-x: auto;
-  flex-shrink: 0;
-}
-
-.element-btn {
-  padding: 10px 16px;
-  border: 2px solid transparent;
-  border-radius: 6px;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  text-transform: uppercase;
-  font-size: 13px;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
-  transition: transform 0.1s, border 0.1s;
-  flex: 0 0 auto;
-}
-
-.element-btn:hover {
-  transform: scale(1.05);
-}
-
-.element-btn:active {
-  transform: scale(0.95);
-}
-
-.element-btn.active {
-  border: 2px solid white;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+/* Обертка для канвасов */
+#jar-wrapper {
+  position: relative;
+  order: 1; 
+  display: block;
 }
 
 canvas {
-  background-color: #000;
-  border: 2px solid #444;
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
   image-rendering: -moz-crisp-edges;
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
   image-rendering: pixelated;
-  max-width: 95vw;
-  max-height: 80vh;
-  width: auto;
-  height: auto;
 }
 
+#frameCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2; 
+  pointer-events: none; 
+  background-color: transparent !important; 
+}
+
+#gameCanvas {
+  position: absolute;
+  z-index: 1; 
+  border: none;
+  border-radius: 0;
+  background-color: rgba(0, 0, 0, 0.4) !important; 
+}
+
+/* Панель веществ */
+.toolbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 15px; /* Увеличено для воздуха */
+  padding: 20px; 
+  background: rgba(0, 0, 0, 0.7);
+  border: 4px solid #5c5c5c;
+  border-top-color: #a3a3a3;
+  border-left-color: #a3a3a3;
+  border-radius: 0;
+  box-shadow: none;
+  
+  max-height: 90vh; 
+  overflow-y: auto; 
+  width: 320px; /* Увеличенная ширина */
+  flex-shrink: 0;
+  order: 2;
+}
+
+/* Скроллбар */
+.toolbar::-webkit-scrollbar {
+  width: 6px;
+}
+.toolbar::-webkit-scrollbar-track {
+  background: #000;
+}
+.toolbar::-webkit-scrollbar-thumb {
+  background: #a3a3a3;
+}
+.toolbar::-webkit-scrollbar-thumb:hover {
+  background: #d1d1d1;
+}
+
+/* Кнопки */
+.element-btn {
+  padding: 12px 10px; 
+  color: white;
+  cursor: pointer;
+  text-transform: uppercase;
+  width: 100%;
+  text-align: center;
+  
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px; 
+  text-shadow: 1px 1px 0px #000;
+  border: none;
+  border-radius: 0;
+  outline: none;
+  box-shadow: 
+      inset 2px 2px 0px rgba(255, 255, 255, 0.5),
+      inset -2px -2px 0px rgba(0, 0, 0, 0.5),
+      3px 3px 0px #000;
+  transition: transform 0.1s, box-shadow 0.1s;
+  image-rendering: pixelated;
+}
+
+.element-btn:hover {
+  filter: brightness(1.2);
+}
+
+.element-btn.active, .element-btn:active {
+  transform: translate(3px, 3px); 
+  box-shadow: 
+      inset 2px 2px 0px rgba(0, 0, 0, 0.6),
+      inset -2px -2px 0px rgba(255, 255, 255, 0.3),
+      0px 0px 0px #000; 
+  filter: brightness(0.8);
+  border: none;
+}
+
+/* Температура */
 .temp-control {
+  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: center;
   color: white;
-  font-weight: bold;
-  font-size: 14px;
-  gap: 5px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  gap: 15px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px dashed #5c5c5c;
 }
 
 #tempSlider {
   cursor: pointer;
+  width: 100%;
 }
 
-@media (max-width: 600px) {
-  .toolbar {
-    padding: 8px;
-    gap: 6px;
-  }
-  .element-btn {
-    padding: 6px 10px;
-    font-size: 11px;
-  }
+/* --- СТИЛИЗАЦИЯ ПОЛЗУНКОВ (RANGE) --- */
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
 }
-/* --- КОНТРОЛЛЕР ЗВУКА --- */
-#audio-panel {
+input[type=range]:focus {
+  outline: none;
+}
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  background: #000;
+  border: 2px solid #5c5c5c;
+  border-top-color: #000;
+  border-left-color: #000;
+  border-bottom-color: #a3a3a3;
+  border-right-color: #a3a3a3;
+}
+input[type=range]::-webkit-slider-thumb {
+  height: 16px;
+  width: 12px;
+  background: #d1d1d1;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -6px; 
+  box-shadow: inset 2px 2px 0px #ffffff, inset -2px -2px 0px #5c5c5c, 2px 2px 0px #000;
+}
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 8px;
+  background: #000;
+  border: 2px solid #5c5c5c;
+}
+input[type=range]::-moz-range-thumb {
+  height: 16px;
+  width: 12px;
+  background: #d1d1d1;
+  border: none;
+  box-shadow: inset 2px 2px 0px #ffffff, inset -2px -2px 0px #5c5c5c;
+}
+
+/* --- КНОПКА НАСТРОЕК (Шестеренка) --- */
+#settings-btn {
   position: absolute;
   bottom: 20px;
-  right: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 100; 
-}
-
-.audio-control-row {
-  background: #222;
-  border: 2px solid #444;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  width: 40px; 
-  height: 40px;
-  overflow: hidden; 
-  transition: width 0.3s ease-in-out; 
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
-}
-
-.audio-control-row:hover {
-  width: 160px; 
-}
-
-.audio-icon {
-  width: 40px;
-  height: 40px;
+  left: 20px;
+  width: 48px;
+  height: 48px;
+  padding: 0; 
+  font-size: 24px; 
   display: flex;
   justify-content: center;
   align-items: center;
-  flex-shrink: 0;
-  color: white;
-  font-size: 18px;
-  cursor: default;
+  z-index: 100;
 }
 
-.audio-control-row input[type="range"] {
-  width: 100px;
-  margin-left: 5px;
-  opacity: 0; 
-  transition: opacity 0.3s ease-in-out;
-  cursor: pointer;
+/* --- ЗАТЕМНЕНИЕ ЭКРАНА (Оверлей) --- */
+#settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6); 
+  z-index: 999; 
+  display: none; 
+  pointer-events: auto; /* Блокирует клики сквозь себя */
+}
+#settings-overlay.open {
+  display: block;
 }
 
-.audio-control-row:hover input[type="range"] {
-  opacity: 1;
+/* --- МОДАЛЬНОЕ МЕНЮ НАСТРОЕК (По центру) --- */
+#settings-menu {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); 
+  background: rgba(0, 0, 0, 0.9);
+  border: 4px solid #5c5c5c;
+  border-top-color: #a3a3a3;
+  border-left-color: #a3a3a3;
+  padding: 30px;
+  width: 320px;
+  z-index: 1000; 
+  display: none; 
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.8);
+}
+#settings-menu.open {
+  display: flex;
+}
+
+#settings-menu h2 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  color: #fff;
+  text-align: center;
+  margin: 0 0 10px 0;
+  text-shadow: 2px 2px 0px #000;
+}
+
+/* --- КРЕСТИК ЗАКРЫТИЯ --- */
+#close-settings-btn {
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Настройки внутри меню */
+.setting-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.setting-row label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #fff;
+  text-shadow: 1px 1px 0px #000;
+}
+.setting-row input[type="range"] {
+  width: 100%;
+}
+
+/* --- АДАПТАЦИЯ ДЛЯ МОБИЛОК --- */
+@media (max-width: 800px) {
+  #game-container {
+    flex-direction: column;
+    gap: 20px; 
+  }
+  .toolbar {
+    order: 2;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 95vw; 
+    max-height: 30vh;
+  }
+  .temp-control {
+    width: 100%;
+  }
+  canvas {
+    max-width: 95vw;
+  }
+  .element-btn {
+    width: auto;
+    font-size: 8px;
+    padding: 6px 10px;
+  }
+  #settings-menu {
+    width: 90vw; /* Меню на телефонах на всю ширину */
+  }
 }

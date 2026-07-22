@@ -5,38 +5,91 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Экосистема в пробирке (Модульная)</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Подключаем файл со стилями рамки из корневой папки -->
+    <link rel="stylesheet" href="frame.css">
 </head>
 <body>
     <!-- Обертка для всей игры -->
     <div id="game-container">
+        
+        <!-- Обертка для слоев с рамкой и игрой -->
+        <div id="jar-wrapper">
+            <!-- Нижний слой: программно отрисованная рамка (банка) -->
+            <canvas id="frameCanvas"></canvas>
+            <!-- Верхний слой: игра (позиционируется внутри банки) -->
+            <canvas id="gameCanvas"></canvas>
+        </div>
+
+        <!-- Панель инструментов (справа) -->
         <div class="toolbar">
             <div class="temp-control">
                 <label for="tempSlider">Температура: <span id="tempValue">20</span>°C</label>
                 <input type="range" id="tempSlider" min="-50" max="100" value="20">
             </div>
-            <!-- Кнопки сгенерируются здесь -->
+            <!-- Кнопки веществ сгенерируются здесь -->
         </div>
-        <canvas id="gameCanvas"></canvas>
     </div>
     
+    <!-- КНОПКА НАСТРОЕК (в левом нижнем углу) -->
+    <button id="settings-btn" class="element-btn">⚙️</button>
+
+    <!-- ЗАТЕМНЕНИЕ ЭКРАНА (Overlay) -->
+    <div id="settings-overlay"></div>
+
+    <!-- МЕНЮ НАСТРОЕК (по центру экрана) -->
+    <div id="settings-menu">
+        <button id="close-settings-btn" class="element-btn">X</button>
+        <h2>Настройки</h2>
+        <div class="setting-row">
+            <label>Громкость музыки 🎵</label>
+            <input type="range" id="musicVolumeSlider" min="0" max="1" step="0.01" value="0.2">
+        </div>
+        <div class="setting-row">
+            <label>Громкость веществ 🔊</label>
+            <input type="range" id="sfxVolumeSlider" min="0" max="1" step="0.01" value="0.5">
+        </div>
+    </div>
+
+    <!-- Основной скрипт игры -->
     <script src="js/main.js" type="module"></script>
-    <!-- Аудио плеер. Слово loop заставляет музыку играть по кругу -->
+    
+    <!-- Фоновая музыка -->
     <audio id="bg-music" loop>
         <source src="audio/music.mp3" type="audio/mpeg">
     </audio>
 
-    <!-- Панель управления звуком -->
-    <div id="audio-panel">
-        <!-- Управление SFX -->
-        <div class="audio-control-row" id="sfx-control">
-            <div class="audio-icon">🔊</div>
-            <input type="range" id="sfxVolumeSlider" min="0" max="1" step="0.01" value="0.5">
-        </div>
-        <!-- Управление музыкой -->
-        <div class="audio-control-row" id="music-control">
-            <div class="audio-icon">🎵</div>
-            <input type="range" id="musicVolumeSlider" min="0" max="1" step="0.01" value="0.2">
-        </div>
-    </div>
+    <!-- Скрипт для модального окна настроек -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const settingsBtn = document.getElementById('settings-btn');
+            const closeBtn = document.getElementById('close-settings-btn');
+            const settingsMenu = document.getElementById('settings-menu');
+            const overlay = document.getElementById('settings-overlay');
+
+            // Функция открытия меню
+            function openSettings() {
+                settingsMenu.classList.add('open');
+                overlay.classList.add('open');
+            }
+
+            // Функция закрытия меню
+            function closeSettings() {
+                settingsMenu.classList.remove('open');
+                overlay.classList.remove('open');
+                settingsBtn.classList.remove('active');
+            }
+
+            if (settingsBtn && closeBtn && settingsMenu && overlay) {
+                // Открыть при клике на шестеренку
+                settingsBtn.addEventListener('click', openSettings);
+                
+                // Закрыть при клике на крестик
+                closeBtn.addEventListener('click', closeSettings);
+                
+                // Закрыть при клике на затемненный фон
+                overlay.addEventListener('click', closeSettings);
+            }
+        });
+    </script>
 </body>
 </html>
