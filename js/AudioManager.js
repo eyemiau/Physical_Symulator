@@ -29,6 +29,12 @@ export class AudioManager {
         this.oneShotProfiles = {
             'PLACE_BLOCK': { baseVolume: 3.5, filterType: 'lowpass', freq: 150, duration: 0.1 }, 
             
+            // --- НАЧАЛО НОВОГО КОДА ---
+            // Резкое шипение с собственной громкостью
+            // Теперь это highpass (пропускает только высокие шипящие частоты),
+            // длится почти полсекунды и звучит в разы громче
+            'EVAPORATE': { baseVolume: 2.0, filterType: 'highpass', freq: 4000, duration: 0.4 },
+            // --- КОНЕЦ НОВОГО КОДА ---
         };
 
         this.channels = {}; 

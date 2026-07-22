@@ -127,8 +127,8 @@ export class Grid {
             }
         }
     }
-
-    processReactions(x, y, type, props) {
+    
+processReactions(x, y, type, props) {
         const index = this.getIndex(x, y);
 
         // --- ГЛОБАЛЬНЫЕ РЕАКЦИИ ---
@@ -167,6 +167,9 @@ export class Grid {
                     const targetType = this.getCell(nx, ny);
                     if (PROPERTIES[targetType]?.canEvaporate && Math.random() < 0.05) {
                         this.setCell(nx, ny, PROPERTIES[targetType].evaporateTo);
+                        
+                        // --- ЗВУК: Мягкое испарение от радиуса жара (Огонь/Лава) ---
+                        audioManager.queueEvent(ELEMENTS.STEAM, 'evaporate');
                     }
                 }
             }
@@ -189,7 +192,6 @@ export class Grid {
             case ELEMENTS.SEED:
             case ELEMENTS.FLOWER_SEED:
             case ELEMENTS.FLOWER_STEM: { 
-                // 1. Капиллярная диффузия (исключаем стебли, чтобы не было утечки воды)
                 if (type !== ELEMENTS.FLOWER_STEM && this.moisture[index] > 0) {
                     const randomDir = CROSS_NEIGHBORS[Math.floor(Math.random() * CROSS_NEIGHBORS.length)];
                     const nx = x + randomDir[0];
@@ -260,7 +262,6 @@ export class Grid {
                         
                         if (heightLeft > 1) {
                             const cellAbove = this.getCell(x, y - 1);
-                            // Пробиваемся сквозь жидкости!
                             if (cellAbove === ELEMENTS.AIR || cellAbove === ELEMENTS.WATER || cellAbove === ELEMENTS.SALT_WATER) {
                                 this.setCell(x, y - 1, ELEMENTS.FLOWER_STEM);
                                 const newIndex = this.getIndex(x, y - 1);
@@ -291,19 +292,18 @@ export class Grid {
             // == ЖИВОТНЫЙ МИР (ИИ) ==
             case ELEMENTS.BUG: {
                 if (this.durability[index] === 0) {
-                    this.durability[index] = 100; // Максимальная сытость при рождении
+                    this.durability[index] = 100;
                 }
 
                 let ateSomething = false;
                 
-                // 1. Поиск еды
                 for (let [dx, dy] of CROSS_NEIGHBORS) {
                     const nx = x + dx, ny = y + dy;
                     const neighborType = this.getCell(nx, ny);
                     const nProps = PROPERTIES[neighborType] || {};
 
                     if (nProps.isOrganic) {
-                        this.setCell(nx, ny, ELEMENTS.BUG); // Размножение!
+                        this.setCell(nx, ny, ELEMENTS.BUG); 
                         this.durability[index] = 255; 
                         this.durability[this.getIndex(nx, ny)] = 255; 
                         
@@ -312,18 +312,16 @@ export class Grid {
                     }
                 }
                 
-                // 2. Логика голода и РОЕВОГО ДВИЖЕНИЯ
                 if (!ateSomething) {
                     if (Math.random() < 0.5) {
                         this.durability[index]--;
                     }
                     
                     if (this.durability[index] <= 1) {
-                        this.setCell(x, y, ELEMENTS.DIRT); // Умер от голода
+                        this.setCell(x, y, ELEMENTS.DIRT); 
                         return true;
                     }
 
-                    // Броуновское (хаотичное) движение роя!
                     if (Math.random() < 0.7) {
                         const dx = Math.floor(Math.random() * 3) - 1; 
                         const dy = Math.floor(Math.random() * 3) - 1; 
@@ -365,6 +363,17 @@ export class Grid {
                     if (neighbor === ELEMENTS.LAVA) {
                         this.setCell(nx, ny, ELEMENTS.STONE);
                         this.setCell(x, y, ELEMENTS.STEAM);
+                        
+                        // --- ЗВУК: Мягкое испарение при прямом касании Лавы ---
+                        audioManager.queueEvent(ELEMENTS.STEAM, 'evaporate'); 
+                        return true; 
+                    }
+                    if (neighbor === ELEMENTS.FIRE) {
+                        this.setCell(nx, ny, ELEMENTS.AIR); 
+                        this.setCell(x, y, ELEMENTS.STEAM); 
+                        
+                        // --- ЗВУК: Мягкое испарение при прямом касании Огня ---
+                        audioManager.queueEvent(ELEMENTS.STEAM, 'evaporate'); 
                         return true; 
                     }
                 }
@@ -426,7 +435,6 @@ export class Grid {
         }
         return false;
     }
-
     processPhysics(x, y, props) {
         const dir = Math.random() > 0.5 ? 1 : -1;
         const myDensity = props.density || 0;
