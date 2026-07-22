@@ -25,10 +25,18 @@
         <source src="audio/music.mp3" type="audio/mpeg">
     </audio>
 
-    <!-- Кнопка громкости -->
-    <div id="audio-control">
-        <div class="audio-icon">🎵</div>
-        <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.2">
+    <!-- Панель управления звуком -->
+    <div id="audio-panel">
+        <!-- Управление SFX -->
+        <div class="audio-control-row" id="sfx-control">
+            <div class="audio-icon">🔊</div>
+            <input type="range" id="sfxVolumeSlider" min="0" max="1" step="0.01" value="0.5">
+        </div>
+        <!-- Управление музыкой -->
+        <div class="audio-control-row" id="music-control">
+            <div class="audio-icon">🎵</div>
+            <input type="range" id="musicVolumeSlider" min="0" max="1" step="0.01" value="0.2">
+        </div>
     </div>
 </body>
 </html>

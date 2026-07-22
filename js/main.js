@@ -1,7 +1,8 @@
 import { CONFIG } from './config.js';
 import { Renderer } from './Renderer.js';
 import { Grid } from './Grid.js';
-import { ELEMENTS, COLORS } from './elements.js';
+import { ELEMENTS, COLORS, PROPERTIES } from './elements.js';
+import { audioManager } from './AudioManager.js';
 
 const renderer = new Renderer(CONFIG);
 const grid = new Grid(CONFIG.GRID_WIDTH, CONFIG.GRID_HEIGHT);
@@ -53,6 +54,8 @@ tempSlider.addEventListener('input', (e) => {
 
 // --- УПРАВЛЕНИЕ МЫШЬЮ (МОМЕНТАЛЬНОЕ РИСОВАНИЕ) ---
 
+let lastBlockSoundTime = 0; 
+
 function drawCell(e) {
     if (!isDrawing) return;
     const rect = renderer.canvas.getBoundingClientRect();
@@ -62,13 +65,30 @@ function drawCell(e) {
     const mouseX = Math.floor((e.clientX - rect.left) * scaleX);
     const mouseY = Math.floor((e.clientY - rect.top) * scaleY);
 
+    let placedSolid = false; 
+
     for (let i = -1; i <= 1; i++) {
         for (let j = -1; j <= 1; j++) {
-            grid.setCell(mouseX + i, mouseY + j, currentElement);
+            const cx = mouseX + i;
+            const cy = mouseY + j;
+            
+            if (grid.getCell(cx, cy) !== currentElement) {
+                grid.setCell(cx, cy, currentElement);
+                
+                const props = PROPERTIES[currentElement] || {};
+                if (currentElement !== ELEMENTS.AIR && !props.isPowder && !props.isLiquid && !props.isGas) {
+                    placedSolid = true;
+                }
+            }
         }
     }
-}
 
+    const now = performance.now();
+    if (placedSolid && (now - lastBlockSoundTime > 150)) {
+        audioManager.playOneShot('PLACE_BLOCK');
+        lastBlockSoundTime = now;
+    }
+}
 renderer.canvas.addEventListener('mousedown', (e) => {
     isDrawing = true;
     drawCell(e); 
@@ -80,28 +100,34 @@ renderer.canvas.addEventListener('mouseleave', () => isDrawing = false);
 // --- ИГРОВОЙ ЦИКЛ ---
 function gameLoop() {
     grid.update();
+    audioManager.playQueuedSounds(); // Проигрываем накопленные за кадр звуки
     renderer.draw(grid);
     requestAnimationFrame(gameLoop);
 }
+
 // --- АУДИО И МУЗЫКА ---
 const bgMusic = document.getElementById('bg-music');
-const volumeSlider = document.getElementById('volumeSlider');
-let musicStarted = false;
+const musicVolumeSlider = document.getElementById('musicVolumeSlider');
+const sfxVolumeSlider = document.getElementById('sfxVolumeSlider');
+let audioContextStarted = false;
 
-// Делаем музыку не сильно громкой в начале
-bgMusic.volume = volumeSlider.value;
+// Инициализация громкости
+bgMusic.volume = musicVolumeSlider.value;
+audioManager.setMasterVolume(sfxVolumeSlider.value);
 
-// Эта штука следит за ползунком и меняет громкость
-volumeSlider.addEventListener('input', (e) => {
-    bgMusic.volume = e.target.value;
-});
+// Слушатели ползунков
+musicVolumeSlider.addEventListener('input', (e) => bgMusic.volume = e.target.value);
+sfxVolumeSlider.addEventListener('input', (e) => audioManager.setMasterVolume(e.target.value));
 
-// Браузеры не разрешают включать музыку просто так. 
-// Поэтому музыка включится, когда ты первый раз кликнешь мышкой в игре.
+// Запуск аудио контекста по первому клику
 document.body.addEventListener('mousedown', () => {
-    if (!musicStarted) {
+    if (!audioContextStarted) {
         bgMusic.play();
-        musicStarted = true;
+        if (audioManager.ctx.state === 'suspended') {
+            audioManager.ctx.resume();
+        }
+        audioContextStarted = true;
     }
 });
+
 gameLoop();

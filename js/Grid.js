@@ -1,4 +1,6 @@
-import { ELEMENTS, PROPERTIES } from './elements.js';
+import { audioManager } from './AudioManager.js';
+import { ELEMENTS, PROPERTIES } from './elements.js'; // Твоя старая строка
+// import { ELEMENTS, PROPERTIES } from './elements.js';
 
 const CROSS_NEIGHBORS = [[0, 1], [1, 0], [0, -1], [-1, 0]];
 
@@ -137,6 +139,8 @@ export class Grid {
                 } else {
                     this.setCell(x, y, props.evaporateTo); 
                 }
+                // ТРИГГЕР ЗВУКА: Звучит только в момент превращения жидкости в газ
+                audioManager.queueEvent(ELEMENTS.STEAM, 'evaporate'); 
                 return true;
             }
         }
@@ -320,21 +324,21 @@ export class Grid {
                     }
 
                     // Броуновское (хаотичное) движение роя!
-                    // Жуки мечутся во все стороны, создавая эффект облака
                     if (Math.random() < 0.7) {
                         const dx = Math.floor(Math.random() * 3) - 1; 
                         const dy = Math.floor(Math.random() * 3) - 1; 
                         if (dx !== 0 || dy !== 0) {
                             if (this.isEmpty(x + dx, y + dy)) {
                                 this.swap(x, y, x + dx, y + dy);
+                                audioManager.queueEvent(ELEMENTS.BUG, 'move');
                                 return true;
                             }
                         }
                     }
                     
-                    // Легкая гравитация - рой не должен улетать в космос, он медленно оседает
                     if (Math.random() < 0.4 && this.isEmpty(x, y + 1)) {
                         this.swap(x, y, x, y + 1);
+                        audioManager.queueEvent(ELEMENTS.BUG, 'move');
                         return true;
                     }
                 }
@@ -386,6 +390,7 @@ export class Grid {
                     if (neighbor !== ELEMENTS.AIR && !nProps.isLiquid && !nProps.isGas && !nProps.isAcidResistant) {
                         this.setCell(nx, ny, ELEMENTS.AIR);       
                         this.setCell(x, y, ELEMENTS.TOXIC_GAS);   
+                        audioManager.queueEvent(ELEMENTS.ACID, 'dissolve');
                         return true; 
                     }
                 }
@@ -425,14 +430,46 @@ export class Grid {
     processPhysics(x, y, props) {
         const dir = Math.random() > 0.5 ? 1 : -1;
         const myDensity = props.density || 0;
+        const myType = this.getCell(x, y); // ДОБАВЛЕНО: запоминаем, кто падает
 
         if (props.isStatic || (!props.isPowder && !props.isLiquid && !props.isGas)) return;
 
-        if (props.isPowder) {
-            if (this.tryDisplace(x, y, 0, 1, myDensity)) return;
-            if (this.tryDisplace(x, y, dir, 1, myDensity)) return;
-            if (this.tryDisplace(x, y, -dir, 1, myDensity)) return;
-        } 
+       if (props.isPowder) {
+            let moved = false;
+            let newX = x;
+            let newY = y;
+
+            if (this.tryDisplace(x, y, 0, 1, myDensity)) {
+                moved = true; newX = x; newY = y + 1;
+            } else if (this.tryDisplace(x, y, dir, 1, myDensity)) {
+                moved = true; newX = x + dir; newY = y + 1;
+            } else if (this.tryDisplace(x, y, -dir, 1, myDensity)) {
+                moved = true; newX = x - dir; newY = y + 1;
+            }
+
+            if (moved) {
+                if (myType === ELEMENTS.SEED || myType === ELEMENTS.FLOWER_SEED) {
+                    // Смотрим, что находится ровно под нашей НОВОЙ позицией
+                    const below = this.getCell(newX, newY + 1);
+                    
+                    // Поверхность — это всё, что не воздух, не жидкость/газ, и ГЛАВНОЕ: не другая семечка!
+                    const isSurface = below !== ELEMENTS.AIR && 
+                                      !PROPERTIES[below]?.isLiquid && 
+                                      !PROPERTIES[below]?.isGas && 
+                                      below !== ELEMENTS.SEED && 
+                                      below !== ELEMENTS.FLOWER_SEED;
+                    
+                    // Если мы в 1 пикселе от земли или катимся по ней — издаем короткий звук
+                    if (isSurface) {
+                        audioManager.queueEvent(myType, 'move');
+                    }
+                } else {
+                    // Для песка, земли и пороха всё звучит как обычно
+                    audioManager.queueEvent(myType, 'move');
+                }
+                return true;
+            }
+        }
         else if (props.isLiquid) {
             if (this.tryDisplace(x, y, 0, 1, myDensity)) return;
             if (this.tryDisplace(x, y, dir, 1, myDensity)) return;
