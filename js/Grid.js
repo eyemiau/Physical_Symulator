@@ -421,10 +421,12 @@ processReactions(x, y, type, props) {
                             }
                         }
                     }
+                    // --- ВОТ ЭТА СТРОЧКА ---
+                    audioManager.playOneShot('EXPLOSION');
                     return true; 
                 }
                 break;
-
+                
             case ELEMENTS.STEAM:
                 if (y === 0) { this.setCell(x, y, ELEMENTS.WATER); return true; }
                 break;
@@ -479,12 +481,20 @@ processReactions(x, y, type, props) {
             }
         }
         else if (props.isLiquid) {
-            if (this.tryDisplace(x, y, 0, 1, myDensity)) return;
-            if (this.tryDisplace(x, y, dir, 1, myDensity)) return;
-            if (this.tryDisplace(x, y, -dir, 1, myDensity)) return;
-            if (this.tryDisplace(x, y, dir, 0, myDensity)) return;
-            if (this.tryDisplace(x, y, -dir, 0, myDensity)) return;
-        } 
+            let moved = false;
+            
+            if (this.tryDisplace(x, y, 0, 1, myDensity)) { moved = true; }
+            else if (this.tryDisplace(x, y, dir, 1, myDensity)) { moved = true; }
+            else if (this.tryDisplace(x, y, -dir, 1, myDensity)) { moved = true; }
+            else if (this.tryDisplace(x, y, dir, 0, myDensity)) { moved = true; }
+            else if (this.tryDisplace(x, y, -dir, 0, myDensity)) { moved = true; }
+
+            // Если пиксель жидкости пролился на соседнюю клетку - триггерим звук
+            if (moved) {
+                audioManager.queueEvent(myType, 'move');
+                return true;
+            }
+        }
         else if (props.isGas) {
             if (Math.random() > 0.27) return; 
             
